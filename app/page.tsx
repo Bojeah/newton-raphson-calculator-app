@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { SetStateAction, useState } from "react";
 import * as math from "mathjs";
 
 export default function Home() {
@@ -11,7 +11,6 @@ export default function Home() {
   const [results, setResults] = useState<CalculationResult | null>(null);
   const [calculationError, setCalculationError] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
-
 
   interface IterationData {
     iteration: number;
@@ -32,7 +31,6 @@ export default function Home() {
       return false;
     }
 
-    
     const hasInvalidLetters: boolean = /[a-wyzA-WYZ]/.test(value);
     if (hasInvalidLetters) {
       setFunctionError("any variables other than x is not allowed");
@@ -43,13 +41,16 @@ export default function Home() {
     }
   };
 
-  const handleFunctionChange = (e) => {
-    const value = e.target.value;
+  const handleFunctionChange = (e: { target: { value: unknown } }) => {
+    const value = String(e.target.value);
     setFunctionInput(value);
     validateFunction(value);
   };
 
-  const handleNumberInput = (value, setter) => {
+  const handleNumberInput = (
+    value: string,
+    setter: { (value: SetStateAction<string>): void; (arg0: string): void }
+  ) => {
     const parsed = parseFloat(value);
     if (isNaN(parsed) || value.trim() === "") {
       setter("0");
@@ -58,7 +59,10 @@ export default function Home() {
     }
   };
 
-  const handleIterationsInput = (value, setter) => {
+  const handleIterationsInput = (
+    value: string,
+    setter: { (value: SetStateAction<string>): void; (arg0: string): void }
+  ) => {
     const parsed = parseInt(value);
     if (isNaN(parsed) || value.trim() === "") {
       setter("0");
@@ -67,16 +71,17 @@ export default function Home() {
     }
   };
 
-  const evaluateFunction = (func, xValue) => {
+  const evaluateFunction = (func: math.MathExpression, xValue: number) => {
     try {
       const scope = { x: xValue };
       return math.evaluate(func, scope);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new Error("Invalid function expression");
     }
   };
 
-  const numericalDerivative = (func, xValue) => {
+  const numericalDerivative = (func: string, xValue: number) => {
     const h = 1e-7;
     const fx1 = evaluateFunction(func, xValue + h);
     const fx2 = evaluateFunction(func, xValue - h);
@@ -84,82 +89,77 @@ export default function Home() {
   };
 
   const handleCalculate = (): void => {
-  console.log("This is actually working");
-  setCalculationError("");
-  setResults(null);
-  setIsCalculating(true);
+    console.log("This is actually working");
+    setCalculationError("");
+    setResults(null);
+    setIsCalculating(true);
 
-  
-  if (!validateFunction(functionInput)) {
-    setCalculationError("Please fix the function input errors");
-    setIsCalculating(false); 
-    return;
-  }
-
-  const x0 = parseFloat(initialGuess);
-  const maxIter = parseInt(iterations);
-
-  if (isNaN(x0) || isNaN(maxIter)) {
-    setCalculationError("Please ensure all inputs are valid numbers");
-    setIsCalculating(false);
-    return;
-  }
-
-  if (maxIter <= 0) {
-    setCalculationError("Number of iterations must be greater than 0");
-    setIsCalculating(false);
-    return;
-  }
-
-
-  try {
-    const iterationData: IterationData[] = [];
-    let x = x0;
-
-    for (let i = 0; i < maxIter; i++) {
-      const fx = evaluateFunction(functionInput, x); 
-      const fpx = numericalDerivative(functionInput, x);
-
-      
-      if (Math.abs(fpx) < 1e-12) {
-        setCalculationError(
-          `Derivative is zero at iteration ${i + 1}. Method cannot continue.`
-        );
-        setResults({
-          iterations: iterationData,
-          finalRoot: null,
-        });
-        setIsCalculating(false);
-        return;
-      }
-
-      const xNew = x - fx / fpx;
-
-      iterationData.push({
-        iteration: i + 1,
-        x: x,
-        fx: fx,
-        fpx: fpx,
-        xNew: xNew,
-      });
-
-      x = xNew;
-
+    if (!validateFunction(functionInput)) {
+      setCalculationError("Please fix the function input errors");
+      setIsCalculating(false);
+      return;
     }
 
-    setResults({
-      iterations: iterationData,
-      finalRoot: x,
-    });
+    const x0 = parseFloat(initialGuess);
+    const maxIter = parseInt(iterations);
 
-  } catch (error) {
-    setCalculationError(
-      `Error: ${error instanceof Error ? error.message : String(error)}`
-    );
-  } finally {
-    setIsCalculating(false);
-  }
-};
+    if (isNaN(x0) || isNaN(maxIter)) {
+      setCalculationError("Please ensure all inputs are valid numbers");
+      setIsCalculating(false);
+      return;
+    }
+
+    if (maxIter <= 0) {
+      setCalculationError("Number of iterations must be greater than 0");
+      setIsCalculating(false);
+      return;
+    }
+
+    try {
+      const iterationData: IterationData[] = [];
+      let x = x0;
+
+      for (let i = 0; i < maxIter; i++) {
+        const fx = evaluateFunction(functionInput, x);
+        const fpx = numericalDerivative(functionInput, x);
+
+        if (Math.abs(fpx) < 1e-12) {
+          setCalculationError(
+            `Derivative is zero at iteration ${i + 1}. Method cannot continue.`
+          );
+          setResults({
+            iterations: iterationData,
+            finalRoot: null,
+          });
+          setIsCalculating(false);
+          return;
+        }
+
+        const xNew = x - fx / fpx;
+
+        iterationData.push({
+          iteration: i + 1,
+          x: x,
+          fx: fx,
+          fpx: fpx,
+          xNew: xNew,
+        });
+
+        x = xNew;
+      }
+
+      setResults({
+        iterations: iterationData,
+        finalRoot: x,
+      });
+    } catch (error) {
+      setCalculationError(
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   return (
     <>
@@ -173,17 +173,18 @@ export default function Home() {
             height={37}
             priority
           />
-            <span className="ml-2 text-lg font-bold dark:text-white">
-            NEWTON-R<Image
+          <span className="ml-2 text-lg font-bold dark:text-white">
+            NEWTON-R
+            <Image
               className="inline-block dark:invert"
               src="/logo2.svg"
               alt="Next.js logo"
               width={24}
               height={24}
               priority
-            />PHSON CALCULATOR
-            </span>
-          
+            />
+            PHSON CALCULATOR
+          </span>
         </nav>
         <main className="flex w-full max-w-5xl flex-col items-start px-16 pt-20 pb-32 bg-white dark:bg-black mx-auto">
           <h1 className="text-4xl font-extrabold leading-tight tracking-tighter dark:text-white sm:text-5xl ">
@@ -246,7 +247,9 @@ export default function Home() {
             <div className="flex items-center mt-4">
               <button
                 onClick={handleCalculate}
-                className={`rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer ${isCalculating ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer ${
+                  isCalculating ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 disabled={isCalculating}
               >
                 {isCalculating ? "Calculating..." : "Calculate"}
@@ -281,7 +284,7 @@ export default function Home() {
                           f(xₙ)
                         </th>
                         <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
-                          f'(xₙ)
+                          f&apos;(xₙ)
                         </th>
                         <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
                           xₙ₊₁
@@ -324,16 +327,18 @@ export default function Home() {
               <p className="font-medium">Okocha-Ojeah Benedict</p>
               <p className="text-xs">Pan-Atlantic University</p>
             </div>
-            <span className="hidden text-zinc-300 dark:text-zinc-600 sm:inline">•</span>
+            <span className="hidden text-zinc-300 dark:text-zinc-600 sm:inline">
+              •
+            </span>
             <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
               <span>Built with</span>
               <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={60}
-          height={12}
-          priority
+                className="dark:invert"
+                src="/next.svg"
+                alt="Next.js logo"
+                width={60}
+                height={12}
+                priority
               />
             </div>
           </div>
