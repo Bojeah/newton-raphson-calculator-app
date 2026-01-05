@@ -18,6 +18,7 @@ export default function Home() {
     fx: number;
     fpx: number;
     xNew: number;
+    fxNew: number;
   }
 
   interface CalculationResult {
@@ -136,6 +137,7 @@ export default function Home() {
         }
 
         const xNew = x - fx / fpx;
+        const fxNew = evaluateFunction(functionInput, xNew);
 
         iterationData.push({
           iteration: i + 1,
@@ -143,6 +145,7 @@ export default function Home() {
           fx: fx,
           fpx: fpx,
           xNew: xNew,
+          fxNew: fxNew,
         });
 
         x = xNew;
@@ -275,19 +278,13 @@ export default function Home() {
                     <thead className="bg-zinc-100 dark:bg-zinc-800">
                       <tr>
                         <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
-                          Iteration
-                        </th>
-                        <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
-                          xₙ
-                        </th>
-                        <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
-                          f(xₙ)
-                        </th>
-                        <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
-                          f&apos;(xₙ)
+                          n
                         </th>
                         <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
                           xₙ₊₁
+                        </th>
+                        <th className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 text-left dark:text-white">
+                          f(xₙ₊₁)
                         </th>
                       </tr>
                     </thead>
@@ -301,16 +298,10 @@ export default function Home() {
                             {iter.iteration}
                           </td>
                           <td className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 font-mono text-sm dark:text-white">
-                            {iter.x.toFixed(10)}
-                          </td>
-                          <td className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 font-mono text-sm dark:text-white">
-                            {iter.fx.toFixed(10)}
-                          </td>
-                          <td className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 font-mono text-sm dark:text-white">
-                            {iter.fpx.toFixed(10)}
-                          </td>
-                          <td className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 font-mono text-sm dark:text-white">
                             {iter.xNew.toFixed(10)}
+                          </td>
+                          <td className="px-4 py-2 border border-zinc-200 dark:border-zinc-700 font-mono text-sm dark:text-white">
+                            {iter.fxNew.toFixed(10)}
                           </td>
                         </tr>
                       ))}
